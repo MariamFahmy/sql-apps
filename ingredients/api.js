@@ -30,7 +30,7 @@ router.get("/type", async (req, res) => {
     type,
   ]);
 
-  res.status(200).json({ status: "success", rows: rows });
+  res.json({ rows });
 });
 
 router.get("/search", async (req, res) => {
@@ -40,6 +40,7 @@ router.get("/search", async (req, res) => {
 
   // return all columns as well as the count of all rows as total_count
   // make sure to account for pagination and only return 5 rows at a time
+  /*my code 
   LIMIT = 5;
   offset = page * 5;
   const { rows } = await pool.query(
@@ -50,6 +51,23 @@ router.get("/search", async (req, res) => {
   res
     .status(200)
     .json({ status: "success", rows: rows, total_count: rows.length });
+  */
+
+  let whereClause = "";
+  const params = [page * 5];
+
+  // search across title and type
+  if (term) {
+    whereClause = `WHERE CONCAT(title, type) ILIKE $2`;
+    params.push(`%${term}%`);
+  }
+
+  const { rows } = await pool.query(
+    `SELECT *, COUNT(*) OVER()::INT AS total_count FROM ingredients ${whereClause} OFFSET $1 LIMIT 5`,
+    params
+  );
+
+  res.json({ rows });
 });
 
 /**
