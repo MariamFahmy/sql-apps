@@ -91,10 +91,13 @@ router.get("/get", async (req, res) => {
   // return the title as title
   // return the body as body
   // if no row[0] has no photo, return it as default.jpg
-  const { rows } = await pool.query(`
+  const { rows } = await pool.query(
+    `
     SELECT title, body
-    FROM recipes WHERE recipe_id=${recipeId};
-  `);
+    FROM recipes WHERE recipe_id=$1;
+  `,
+    [recipeId]
+  );
   let photos = (
     await pool.query(
       `
