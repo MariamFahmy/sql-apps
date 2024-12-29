@@ -39,14 +39,15 @@ router.get("/search", async function (req, res) {
   // for recipes without photos, return url as default.jpg
   const { rows } = await pool.query(`
       SELECT DISTINCT ON (recipes.recipe_id)
-        recipes.recipe_id, recipes.title,
+        recipes.recipe_id, 
+        recipes.title,
         COALESCE(recipes_photos.url, 'default.jpg') AS url
       FROM 
-          recipes
+        recipes
       LEFT JOIN
-          recipes_photos 
+        recipes_photos 
       ON 
-          recipes_photos.recipe_id=recipes.recipe_id;
+        recipes_photos.recipe_id=recipes.recipe_id;
     `);
 
   res.json({ rows });
@@ -60,7 +61,9 @@ router.get("/get", async (req, res) => {
   //    name the ingredient image `ingredient_image`
   //    name the ingredient type `ingredient_type`
   //    name the ingredient title `ingredient_title`
-  const ingredients = (await pool.query(`
+  const ingredients = (
+    await pool.query(
+      `
     SELECT 
       ingredients.image AS ingredient_image,
       ingredients.type AS ingredient_type,
@@ -76,8 +79,11 @@ router.get("/get", async (req, res) => {
     ON
       recipe_ingredients.ingredient_id=ingredients.id
     WHERE 
-      recipes.recipe_id=${recipeId};
-    `)).rows;
+      recipes.recipe_id=$1;
+    `,
+      [recipeId]
+    )
+  ).rows;
 
   //
   // return all photo rows as photos
@@ -88,8 +94,10 @@ router.get("/get", async (req, res) => {
   const { rows } = await pool.query(`
     SELECT title, body
     FROM recipes WHERE recipe_id=${recipeId};
-  `)
-  let photos = (await pool.query(`
+  `);
+  let photos = (
+    await pool.query(
+      `
     SELECT recipes_photos.url
     FROM recipes_photos
     INNER JOIN
@@ -97,11 +105,14 @@ router.get("/get", async (req, res) => {
     ON
       recipes.recipe_id=recipes_photos.recipe_id
     WHERE
-      recipes.recipe_id=${recipeId};
-    `)).rows
-  
+      recipes.recipe_id=$1;
+    `,
+      [recipeId]
+    )
+  ).rows;
+
   if (photos.length == 0) {
-    photos = [{url: "default.jpg"}]
+    photos = [{ url: "default.jpg" }];
   }
 
   res.json({
@@ -109,7 +120,7 @@ router.get("/get", async (req, res) => {
     photos: photos.map((row) => row.url),
     title: rows[0].title,
     body: rows[0].body,
-  })
+  });
 });
 /**
  * Student code ends here
